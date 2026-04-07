@@ -1,0 +1,4 @@
+fake_news_distilbert/
+fake_news_distilbert_full/
+*.bin
+*.safetensors
