@@ -13,9 +13,9 @@ from transformers import DistilBertForSequenceClassification, DistilBertTokenize
 @st.cache_resource
 def load_model():
     """Load the trained model, tokenizer, and label encoder"""
-    model = DistilBertForSequenceClassification.from_pretrained("farzirfn/fake_news_distilbert")
-    tokenizer = DistilBertTokenizer.from_pretrained("farzirfn/fake_news_distilbert")
-    label_encoder = pickle.load(open("label_encoder.pkl", "rb"))
+    model = DistilBertForSequenceClassification.from_pretrained("./fake_news_distilbert")
+    tokenizer = DistilBertTokenizer.from_pretrained("./fake_news_distilbert")
+    label_encoder = pickle.load(open("./label_encoder.pkl", "rb"))
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
