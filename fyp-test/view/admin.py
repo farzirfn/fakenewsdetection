@@ -184,12 +184,13 @@ def stats_page():
     fig_status.update_layout(height=320)
     st.plotly_chart(fig_status, use_container_width=True)
 
+    
     with col2:
         st.markdown(
-        """
-        <div style="background-color:#f9f9f9; padding:15px; border-radius:10px; 
-                    box-shadow:2px 2px 5px rgba(0,0,0,0.1);">
-            <h4 style="text-align:center; color:#16A085;">Distribution by Subject</h4>
+            """
+            <div style="background-color:#f9f9f9; padding:15px; border-radius:10px; 
+                        box-shadow:2px 2px 5px rgba(0,0,0,0.1);">
+                <h4 style="text-align:center; color:#16A085;">Distribution by Subject</h4>
         </div>
         """,
         unsafe_allow_html=True
