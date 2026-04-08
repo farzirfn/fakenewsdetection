@@ -166,12 +166,12 @@ def stats_page():
 
     with col1:
         df_status = dataset_summary['statuses']
-    fig_status = px.pie(
-        df_status,
-        names="status",
-        values="count",
-        hole=0.4,
-        color_discrete_sequence=px.colors.sequential.RdBu
+        fig_status = px.pie(
+            df_status,
+            names="status",
+            values="count",
+            hole=0.4,
+            color_discrete_sequence=px.colors.sequential.RdBu
     )
     fig_status.update_layout(height=320)
 
@@ -190,13 +190,13 @@ def stats_page():
 
     with col2:
         df_subject = dataset_summary['subjects']
-    fig_subject = px.bar(
-        df_subject,
-        x="subject",
-        y="count",
-        text="count",
-        color="subject",
-        color_discrete_sequence=px.colors.qualitative.Set2
+        fig_subject = px.bar(
+            df_subject,
+            x="subject",
+            y="count",
+            text="count",
+            color="subject",
+            color_discrete_sequence=px.colors.qualitative.Set2
     )
     fig_subject.update_traces(textposition="outside")
     fig_subject.update_layout(height=320)
