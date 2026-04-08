@@ -15,7 +15,9 @@ def load_model():
     """Load the trained model, tokenizer, and label encoder"""
     model = DistilBertForSequenceClassification.from_pretrained("farzirfn/fake-news-distilbert")
     tokenizer = DistilBertTokenizer.from_pretrained("farzirfn/fake-news-distilbert")
-    label_encoder = pickle.load(open("label_encoder.pkl", "rb"))
+    from huggingface_hub import hf_hub_download
+    encoder_path = hf_hub_download(repo_id="farzirfn/fake-news-distilbert", filename="label_encoder.pkl")
+    label_encoder = pickle.load(open(encoder_path, "rb"))
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
