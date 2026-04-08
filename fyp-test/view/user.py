@@ -28,7 +28,7 @@ def load_model():
 # ================================
 # PREDICTION FUNCTION
 # ================================
-def predict_news(model, tokenizer, label_map, device, text):
+def predict_news(model, tokenizer, label_encoder, device, text):
     """Predict whether news is real or fake"""
     encoding = tokenizer(
         text,
@@ -46,7 +46,7 @@ def predict_news(model, tokenizer, label_map, device, text):
 
     pred_id = torch.argmax(probs, dim=1).item()
     confidence = probs[0][pred_id].item()
-    label = label_map[pred_id]
+    label = label_encoder.inverse_transform([pred_id])[0]
 
     return label, confidence, probs[0].cpu().numpy()
 
@@ -130,7 +130,7 @@ def user_home():
             # Detailed probabilities
             with st.expander("📈 View Detailed Probabilities"):
                 df = pd.DataFrame({
-                    "Class": list(label_map.values()),
+                    "Class": label_encoder.classes_,
                     "Probability (%)": [round(p*100, 2) for p in probs]
                 })
                 
