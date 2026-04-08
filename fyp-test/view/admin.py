@@ -102,23 +102,64 @@ def stats_page():
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
-        st.metric("📊 Total Records", f"{dataset_summary['total']:,}")
+        st.markdown(
+            f"""
+            <div style="background-color:#eaf2f8; padding:20px; border-radius:10px; text-align:center; box-shadow:2px 2px 5px rgba(0,0,0,0.1);">
+                <h4 style="color:#2E86C1;">📊 Total Records</h4>
+                <h2 style="color:#000;">{dataset_summary['total']:,}</h2>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
     
     with col2:
         num_subjects = len(dataset_summary['subjects'])
-        st.metric("📚 Subjects", num_subjects)
+        st.markdown(
+            f"""
+            <div style="background-color:#eaf2f8; padding:20px; border-radius:10px; text-align:center; box-shadow:2px 2px 5px rgba(0,0,0,0.1);">
+                <h4 style="color:#2E86C1;">📚 Subjects</h4>
+                <h2 style="color:#000;">{num_subjects}</h2>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
     
     with col3:
         num_statuses = len(dataset_summary['statuses'])
-        st.metric("🏷️ Status Types", num_statuses)
+        st.markdown(
+            f"""
+            <div style="background-color:#eaf2f8; padding:20px; border-radius:10px; text-align:center; box-shadow:2px 2px 5px rgba(0,0,0,0.1);">
+                <h4 style="color:#2E86C1;">🏷️ Status Types</h4>
+                <h2 style="color:#000;">{num_statuses}</h2>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
     
     with col4:
         if not df_train.empty:
             accuracy = float(df_train['accuracy'][0]) * 100
-            st.metric("🎯 Model Accuracy", f"{accuracy:.1f}%")
+            st.markdown(
+                f"""
+                <div style="background-color:#eaf2f8; padding:20px; border-radius:10px; text-align:center; box-shadow:2px 2px 5px rgba(0,0,0,0.1);">
+                    <h4 style="color:#2E86C1;">🎯 Model Accuracy</h4>
+                    <h2 style="color:#000;">{accuracy:.1f}%</h2>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
         else:
-            st.metric("⚠️ Model Accuracy", "N/A")
-    
+            st.markdown(
+                f"""
+                <div style="background-color:#eaf2f8; padding:20px; border-radius:10px; text-align:center; box-shadow:2px 2px 5px rgba(0,0,0,0.1);">
+                    <h4 style="color:#2E86C1;">🎯 Model Accuracy</h4>
+                    <h2 style="color:#000;">N/A</h2>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
     # Dataset distribution charts
     col1, col2 = st.columns(2)
     
