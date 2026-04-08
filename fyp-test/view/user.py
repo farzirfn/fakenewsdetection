@@ -6,26 +6,29 @@ import pickle
 import plotly.graph_objects as go
 import plotly.express as px
 from transformers import DistilBertForSequenceClassification, DistilBertTokenizer
+from huggingface_hub import hf_hub_download
+
 
 # ================================
 # MODEL LOADING
 # ================================
 @st.cache_resource
 def load_model():
-    """Load the trained model, tokenizer, and label encoder"""
     model = DistilBertForSequenceClassification.from_pretrained("farzirfn/fake-news-distilbert")
     tokenizer = DistilBertTokenizer.from_pretrained("farzirfn/fake-news-distilbert")
-    label_encoder = pickle.load(open("label_encoder.pkl", "rb"))
+
+    label_map = model.config.id2label  # ✅ replace encoder
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
     model.eval()
-    return model, tokenizer, label_encoder, device
+
+    return model, tokenizer, label_map, device
 
 # ================================
 # PREDICTION FUNCTION
 # ================================
-def predict_news(model, tokenizer, label_encoder, device, text):
+def predict_news(model, tokenizer, label_map, device, text):
     """Predict whether news is real or fake"""
     encoding = tokenizer(
         text,
@@ -43,7 +46,7 @@ def predict_news(model, tokenizer, label_encoder, device, text):
 
     pred_id = torch.argmax(probs, dim=1).item()
     confidence = probs[0][pred_id].item()
-    label = label_encoder.inverse_transform([pred_id])[0]
+    label = label_map[pred_id]
 
     return label, confidence, probs[0].cpu().numpy()
 
@@ -127,7 +130,7 @@ def user_home():
             # Detailed probabilities
             with st.expander("📈 View Detailed Probabilities"):
                 df = pd.DataFrame({
-                    "Class": label_encoder.classes_,
+                    "Class": list(label_map.values()),
                     "Probability (%)": [round(p*100, 2) for p in probs]
                 })
                 
