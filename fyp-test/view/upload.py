@@ -32,11 +32,11 @@ def create_connection():
     """Create database connection with error handling"""
     try:
         conn = mysql.connector.connect(
-            host="localhost",
-            user="root",
-            password="",
-            database="fyp",
-            autocommit=False
+            host=st.secrets["mysql"]["host"],
+            port=st.secrets["mysql"]["port"],
+            user=st.secrets["mysql"]["username"],
+            password=st.secrets["mysql"]["password"],
+            database=st.secrets["mysql"]["database"]
         )
         return conn
     except mysql.connector.Error as e:
