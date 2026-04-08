@@ -224,16 +224,48 @@ def stats_page():
     f1 = float(df_train['f1'][0])
     
     with col1:
-        st.metric("Accuracy", f"{accuracy:.4f}", f"{accuracy*100:.2f}%")
+        st.markdown(
+            f"""
+            <div style="background-color:#eaf2f8; padding:20px; border-radius:10px; text-align:center; box-shadow:2px 2px 5px rgba(0,0,0,0.1);">
+                <h4 style="color:#2E86C1;">🎯 Model Accuracy</h4>
+                <h2 style="color:#000;">{accuracy*100:.2f}%</h2>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
     
     with col2:
-        st.metric("Precision", f"{precision:.4f}", f"{precision*100:.2f}%")
+        st.markdown(
+            f"""
+            <div style="background-color:#eaf2f8; padding:20px; border-radius:10px; text-align:center; box-shadow:2px 2px 5px rgba(0,0,0,0.1);">
+                <h4 style="color:#2E86C1;">📊 Precision</h4>
+                <h2 style="color:#000;">{precision*100:.2f}%</h2>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
     
     with col3:
-        st.metric("Recall", f"{recall:.4f}", f"{recall*100:.2f}%")
+        st.markdown(
+            f"""
+            <div style="background-color:#eaf2f8; padding:20px; border-radius:10px; text-align:center; box-shadow:2px 2px 5px rgba(0,0,0,0.1);">
+                <h4 style="color:#2E86C1;">📈 Recall</h4>
+                <h2 style="color:#000;">{recall*100:.2f}%</h2>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
     
     with col4:
-        st.metric("F1 Score", f"{f1:.4f}", f"{f1*100:.2f}%")
+        st.markdown(
+            f"""
+            <div style="background-color:#eaf2f8; padding:20px; border-radius:10px; text-align:center; box-shadow:2px 2px 5px rgba(0,0,0,0.1);">
+                <h4 style="color:#2E86C1;">📊 F1 Score</h4>
+                <h2 style="color:#000;">{f1*100:.2f}%</h2>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
     
     # Visualizations
     col1, col2 = st.columns([1, 1])
