@@ -2,22 +2,26 @@ import streamlit as st
 import pandas as pd
 import torch
 import torch.nn.functional as F
-import pickle
 import plotly.graph_objects as go
 import plotly.express as px
 from transformers import DistilBertForSequenceClassification, DistilBertTokenizer
-from huggingface_hub import hf_hub_download
-
 
 # ================================
 # MODEL LOADING
 # ================================
 @st.cache_resource
 def load_model():
-    model = DistilBertForSequenceClassification.from_pretrained("farzirfn/fake-news-distilbert")
-    tokenizer = DistilBertTokenizer.from_pretrained("farzirfn/fake-news-distilbert")
+    """Load the trained model and tokenizer"""
 
-    label_map = model.config.id2label  # ✅ replace encoder
+    model = DistilBertForSequenceClassification.from_pretrained(
+        "farzirfn/fake-news-distilbert"
+    )
+    tokenizer = DistilBertTokenizer.from_pretrained(
+        "farzirfn/fake-news-distilbert"
+    )
+
+    # ✅ Use built-in label mapping (NO .pkl needed)
+    label_map = model.config.id2label
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
@@ -25,11 +29,13 @@ def load_model():
 
     return model, tokenizer, label_map, device
 
+
 # ================================
 # PREDICTION FUNCTION
 # ================================
-def predict_news(model, tokenizer, label_encoder, device, text):
+def predict_news(model, tokenizer, label_map, device, text):
     """Predict whether news is real or fake"""
+
     encoding = tokenizer(
         text,
         truncation=True,
@@ -37,6 +43,7 @@ def predict_news(model, tokenizer, label_encoder, device, text):
         max_length=256,
         return_tensors="pt"
     )
+
     encoding = {k: v.to(device) for k, v in encoding.items()}
 
     with torch.no_grad():
@@ -46,17 +53,22 @@ def predict_news(model, tokenizer, label_encoder, device, text):
 
     pred_id = torch.argmax(probs, dim=1).item()
     confidence = probs[0][pred_id].item()
-    label = label_encoder.inverse_transform([pred_id])[0]
+
+    # ✅ Get label from model config
+    if isinstance(label_map, dict):
+        label = label_map[str(pred_id)] if str(pred_id) in label_map else label_map[pred_id]
+    else:
+        label = label_map[pred_id]
 
     return label, confidence, probs[0].cpu().numpy()
+
 
 # ================================
 # GAUGE CHART
 # ================================
 def create_confidence_gauge(confidence, label):
-    """Create a gauge chart for confidence"""
     color = "#667eea" if label.lower() == "real" else "#f5576c"
-    
+
     fig = go.Figure(go.Indicator(
         mode="gauge+number",
         value=confidence * 100,
@@ -70,12 +82,16 @@ def create_confidence_gauge(confidence, label):
                 {'range': [50, 80], 'color': "#f5a623"},
                 {'range': [80, 100], 'color': "#667eea"}
             ],
-            'threshold': {'line': {'color': "black", 'width': 4}, 'value': 90}
+            'threshold': {
+                'line': {'color': "black", 'width': 4},
+                'value': 90
+            }
         }
     ))
-    
+
     fig.update_layout(height=300)
     return fig
+
 
 # ================================
 # MAIN APP
@@ -86,16 +102,19 @@ def user_home():
         "<h2 style='text-align:center; color:#2E86C1;'>🔍 Fake News Detector</h2>",
         unsafe_allow_html=True
     )
-    st.write("<p style='text-align:center; color:gray;'>Powered by AI • Analyze news articles in seconds</p>", unsafe_allow_html=True)
+    st.write(
+        "<p style='text-align:center; color:gray;'>Powered by AI • Analyze news articles in seconds</p>",
+        unsafe_allow_html=True
+    )
     st.divider()
-    
+
     # Load model
     try:
-        model, tokenizer, label_encoder, device = load_model()
+        model, tokenizer, label_map, device = load_model()
     except Exception as e:
         st.error(f"❌ Error loading model: {str(e)}")
         st.stop()
-    
+
     # Input section
     st.subheader("📝 Enter News Article")
     text_input = st.text_area(
@@ -103,37 +122,38 @@ def user_home():
         height=150,
         placeholder="Example: Breaking news! Scientists discover new planet..."
     )
-    
-    # Predict button
+
     predict_button = st.button("🔍 Analyze News", use_container_width=True)
-    
+
     # Prediction
     if predict_button:
         if text_input.strip():
             with st.spinner("🤖 Analyzing..."):
-                label, confidence, probs = predict_news(model, tokenizer, label_encoder, device, text_input)
+                label, confidence, probs = predict_news(
+                    model, tokenizer, label_map, device, text_input
+                )
                 confidence_pct = round(confidence * 100, 2)
-            
-            # Result section
+
+            # Result
             if label.lower() == "real":
-                st.success(f"✅ REAL NEWS", icon="✅")
+                st.success("✅ REAL NEWS")
                 st.metric("Confidence", f"{confidence_pct:.2f}%")
             else:
-                st.error(f"❌ FAKE NEWS", icon="❌")
+                st.error("❌ FAKE NEWS")
                 st.metric("Confidence", f"{confidence_pct:.2f}%")
-            
-            # Confidence gauge
+
+            # Gauge
             st.subheader("📊 Confidence Analysis")
             fig = create_confidence_gauge(confidence, label)
             st.plotly_chart(fig, use_container_width=True)
-            
-            # Detailed probabilities
+
+            # Probabilities
             with st.expander("📈 View Detailed Probabilities"):
                 df = pd.DataFrame({
-                    "Class": label_encoder.classes_,
-                    "Probability (%)": [round(p*100, 2) for p in probs]
+                    "Class": list(label_map.values()),
+                    "Probability (%)": [round(p * 100, 2) for p in probs]
                 })
-                
+
                 fig_probs = px.bar(
                     df,
                     x="Class",
@@ -142,28 +162,31 @@ def user_home():
                     color="Class",
                     color_discrete_sequence=px.colors.qualitative.Set2
                 )
+
                 fig_probs.update_traces(textposition="outside")
                 fig_probs.update_layout(height=320)
+
                 st.plotly_chart(fig_probs, use_container_width=True)
-            
+
         else:
             st.warning("⚠️ Please enter some text to analyze.")
-    
-    # Info section
+
+    # Info
     if not predict_button or not text_input.strip():
         st.info("""
         **ℹ️ How It Works**
         
-        This AI-powered system uses **DistilBERT**, a state-of-the-art natural language processing model, to analyze news articles and determine their credibility.
+        This AI-powered system uses **DistilBERT**, a state-of-the-art NLP model, to classify news as real or fake.
         
-        - 🎯 **High Accuracy:** Trained on thousands of verified news articles  
-        - ⚡ **Instant Results:** Get predictions in seconds  
-        - 🔒 **Privacy First:** Your text is processed locally and not stored  
+        - 🎯 High Accuracy  
+        - ⚡ Instant Results  
+        - 🔒 Privacy Friendly  
         """)
-    
+
     # Footer
     st.markdown("---")
-    st.caption("⚡ Powered by DistilBERT • Made with Streamlit • © 2026 Fake News Detector")
+    st.caption("⚡ Powered by DistilBERT • Made with Streamlit • © 2026")
+
 
 # ================================
 # RUN APP
