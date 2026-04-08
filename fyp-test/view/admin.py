@@ -8,22 +8,21 @@ import plotly.express as px
 # -------------------------------
 # DB Connection
 # -------------------------------
-def get_db_connection():
-    conn = mysql.connector.connect(
+def create_connection():
+    return mysql.connector.connect(
         host=st.secrets["mysql"]["host"],
         port=st.secrets["mysql"]["port"],
-        database=st.secrets["mysql"]["database"],
         user=st.secrets["mysql"]["username"],
-        password=st.secrets["mysql"]["password"]
+        password=st.secrets["mysql"]["password"],
+        database=st.secrets["mysql"]["database"]
     )
-    return conn
 
 # -------------------------------
 # Load dataset statistics
 # -------------------------------
 def load_stats():
     """Load dataset distribution by status"""
-    conn = get_db_connection()
+    conn = create_connection()
     query = "SELECT status, COUNT(*) as count FROM dataset GROUP BY status"
     df = pd.read_sql(query, conn)
     conn.close()
@@ -31,7 +30,7 @@ def load_stats():
 
 def load_dataset_summary():
     """Load comprehensive dataset statistics"""
-    conn = get_db_connection()
+    conn = create_connection()
     cursor = conn.cursor(dictionary=True)
     
     # Total records
@@ -60,7 +59,7 @@ def load_dataset_summary():
 # -------------------------------
 def load_train_results():
     """Load latest training result"""
-    conn = get_db_connection()
+    conn = create_connection()
     query = "SELECT * FROM train_results ORDER BY timestamp DESC LIMIT 1"
     df = pd.read_sql(query, conn)
     conn.close()
@@ -68,7 +67,7 @@ def load_train_results():
 
 def load_training_history():
     """Load all training history for trends"""
-    conn = get_db_connection()
+    conn = create_connection()
     query = "SELECT * FROM train_results ORDER BY timestamp DESC LIMIT 10"
     df = pd.read_sql(query, conn)
     conn.close()
