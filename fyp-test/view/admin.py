@@ -162,52 +162,36 @@ def stats_page():
 
     # Dataset distribution charts
     col1, col2 = st.columns(2)
-
+    
     with col1:
-        st.markdown(
-        """
-        <div style="background-color:#f9f9f9; padding:15px; border-radius:10px; 
-                    box-shadow:2px 2px 5px rgba(0,0,0,0.1);">
-            <h4 style="text-align:center; color:#2E86C1;">Distribution by Status</h4>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-    df_status = dataset_summary['statuses']
-    fig_status = px.pie(
-        df_status,
-        names="status",
-        values="count",
-        hole=0.4,
-        color_discrete_sequence=px.colors.sequential.RdBu
-    )
-    fig_status.update_layout(height=320)
-    st.plotly_chart(fig_status, use_container_width=True)
-
+        st.subheader("Distribution by Status")
+        df_status = dataset_summary['statuses']
+        
+        fig_status = px.pie(
+            df_status,
+            names="status",
+            values="count",
+            hole=0.4,
+            color_discrete_sequence=px.colors.sequential.RdBu
+        )
+        fig_status.update_layout(height=320)
+        st.plotly_chart(fig_status, use_container_width=True)
     
     with col2:
-        st.markdown(
-            """
-            <div style="background-color:#f9f9f9; padding:15px; border-radius:10px; 
-                        box-shadow:2px 2px 5px rgba(0,0,0,0.1);">
-                <h4 style="text-align:center; color:#16A085;">Distribution by Subject</h4>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-    df_subject = dataset_summary['subjects']
-    fig_subject = px.bar(
-        df_subject,
-        x="subject",
-        y="count",
-        text="count",
-        color="subject",
-        color_discrete_sequence=px.colors.qualitative.Set2
-    )
-    fig_subject.update_traces(textposition="outside")
-    fig_subject.update_layout(height=320)
-    st.plotly_chart(fig_subject, use_container_width=True)
-
+        st.subheader("Distribution by Subject")
+        df_subject = dataset_summary['subjects']
+        
+        fig_subject = px.bar(
+            df_subject,
+            x="subject",
+            y="count",
+            text="count",
+            color="subject",
+            color_discrete_sequence=px.colors.qualitative.Set2
+        )
+        fig_subject.update_traces(textposition="outside")
+        fig_subject.update_layout(height=320)
+        st.plotly_chart(fig_subject, use_container_width=True)
     
     # Detailed table
     with st.expander("📋 View Detailed Statistics"):
