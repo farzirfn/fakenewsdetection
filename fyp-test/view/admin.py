@@ -163,31 +163,49 @@ def stats_page():
     # Dataset distribution charts in cards
     col1, col2 = st.columns(2)
 
+# ===============================
+# LEFT: STATUS
+# ===============================
     with col1:
         df_status = dataset_summary['statuses']
+
+        st.markdown(
+            """
+            <div style="background-color:#f9f9f9; padding:15px; border-radius:12px;
+                        box-shadow:0 4px 10px rgba(0,0,0,0.08);">
+                <h4 style="text-align:center; color:#2E86C1;">📊 Distribution by Status</h4>
+        """,
+        unsafe_allow_html=True
+    )
+
     fig_status = px.pie(
         df_status,
         names="status",
         values="count",
-        hole=0.4,
-        color_discrete_sequence=px.colors.sequential.RdBu
+        hole=0.5,  # nicer donut
+        color_discrete_sequence=px.colors.sequential.Blues
     )
-    fig_status.update_layout(height=320)
+    fig_status.update_layout(height=300, margin=dict(t=10,b=10,l=10,r=10))
 
-    # Card wrapper
-    st.markdown(
-        """
-        <div style="background-color:#f9f9f9; padding:15px; border-radius:10px;
-                    box-shadow:2px 2px 5px rgba(0,0,0,0.1);">
-            <h4 style="text-align:center; color:#2E86C1;">Distribution by Status</h4>
-        """,
-        unsafe_allow_html=True
-    )
     st.plotly_chart(fig_status, use_container_width=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
+
+# ===============================
+# RIGHT: SUBJECT
+# ===============================
     with col2:
         df_subject = dataset_summary['subjects']
+
+        st.markdown(
+            """
+            <div style="background-color:#f9f9f9; padding:15px; border-radius:12px;
+                        box-shadow:0 4px 10px rgba(0,0,0,0.08);">
+                <h4 style="text-align:center; color:#16A085;">📚 Distribution by Subject</h4>
+        """,
+        unsafe_allow_html=True
+    )
+
     fig_subject = px.bar(
         df_subject,
         x="subject",
@@ -197,17 +215,8 @@ def stats_page():
         color_discrete_sequence=px.colors.qualitative.Set2
     )
     fig_subject.update_traces(textposition="outside")
-    fig_subject.update_layout(height=320)
+    fig_subject.update_layout(height=300, margin=dict(t=10,b=10,l=10,r=10))
 
-    # Card wrapper
-    st.markdown(
-        """
-        <div style="background-color:#f9f9f9; padding:15px; border-radius:10px;
-                    box-shadow:2px 2px 5px rgba(0,0,0,0.1);">
-            <h4 style="text-align:center; color:#16A085;">Distribution by Subject</h4>
-        """,
-        unsafe_allow_html=True
-    )
     st.plotly_chart(fig_subject, use_container_width=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
