@@ -6,8 +6,50 @@ import plotly.graph_objects as go
 import plotly.express as px
 
 # -------------------------------
-# DB Connection
+# Page Configuration & CSS
 # -------------------------------
+st.set_page_config(page_title="Admin Dashboard", layout="wide")
+
+def inject_custom_css():
+    st.markdown("""
+        <style>
+        /* Minimalist typography and spacing */
+        h1, h2, h3 {
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            color: #1E293B;
+        }
+        .subtitle {
+            color: #64748B;
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+            font-weight: 400;
+        }
+        /* Metric card styling */
+        div[data-testid="metric-container"] {
+            background-color: #ffffff;
+            border: 1px solid #E2E8F0;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+            transition: all 0.2s ease;
+        }
+        div[data-testid="metric-container"]:hover {
+            box-shadow: 0 4px 6px rgba(0,0,0,0.04);
+            border-color: #CBD5E1;
+        }
+        /* Minimalist expanders */
+        .streamlit-expanderHeader {
+            font-weight: 500;
+            color: #475569;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+# -------------------------------
+# DB Connection & Data Loading
+# -------------------------------
+@st.cache_resource
 def create_connection():
     return mysql.connector.connect(
         host=st.secrets["mysql"]["host"],
@@ -17,31 +59,17 @@ def create_connection():
         database=st.secrets["mysql"]["database"]
     )
 
-# -------------------------------
-# Load dataset statistics
-# -------------------------------
-def load_stats():
-    """Load dataset distribution by status"""
-    conn = create_connection()
-    query = "SELECT status, COUNT(*) as count FROM dataset GROUP BY status"
-    df = pd.read_sql(query, conn)
-    conn.close()
-    return df
-
+@st.cache_data(ttl=60)
 def load_dataset_summary():
-    """Load comprehensive dataset statistics"""
     conn = create_connection()
     cursor = conn.cursor(dictionary=True)
     
-    # Total records
     cursor.execute("SELECT COUNT(*) as total FROM dataset")
     total = cursor.fetchone()['total']
     
-    # Records by subject
     cursor.execute("SELECT subject, COUNT(*) as count FROM dataset GROUP BY subject")
     subjects = cursor.fetchall()
     
-    # Records by status
     cursor.execute("SELECT status, COUNT(*) as count FROM dataset GROUP BY status")
     statuses = cursor.fetchall()
     
@@ -54,19 +82,16 @@ def load_dataset_summary():
         'statuses': pd.DataFrame(statuses)
     }
 
-# -------------------------------
-# Load training results
-# -------------------------------
+@st.cache_data(ttl=60)
 def load_train_results():
-    """Load latest training result"""
     conn = create_connection()
     query = "SELECT * FROM train_results ORDER BY timestamp DESC LIMIT 1"
     df = pd.read_sql(query, conn)
     conn.close()
     return df
 
+@st.cache_data(ttl=60)
 def load_training_history():
-    """Load all training history for trends"""
     conn = create_connection()
     query = "SELECT * FROM train_results ORDER BY timestamp DESC LIMIT 10"
     df = pd.read_sql(query, conn)
@@ -74,150 +99,134 @@ def load_training_history():
     return df
 
 # -------------------------------
+# Chart Styling Helper
+# -------------------------------
+def apply_minimalist_layout(fig):
+    fig.update_layout(
+        template="plotly_white",
+        plot_bgcolor="rgba(0,0,0,0)",
+        paper_bgcolor="rgba(0,0,0,0)",
+        margin=dict(l=20, r=20, t=40, b=20),
+        font=dict(color="#475569", family="Inter, sans-serif"),
+        showlegend=False
+    )
+    fig.update_xaxes(showgrid=False, zeroline=False, color="#94A3B8")
+    fig.update_yaxes(showgrid=True, gridcolor="#F1F5F9", zeroline=False, color="#94A3B8")
+    return fig
+
+# -------------------------------
 # Admin Dashboard Page
 # -------------------------------
 def stats_page():
-    # Header
-    st.markdown(
-        "<h2 style='text-align:center; color:#2E86C1;'>📊 Admin Dashboard</h2>",
-        unsafe_allow_html=True
-    )
-    st.write("<p style='text-align:center; color:gray;'>Real-time insights and model performance metrics</p>", unsafe_allow_html=True)
-    st.divider()
+    inject_custom_css()
     
-    # Load data
+    # Clean Header
+    st.markdown("<h1>System Overview</h1>", unsafe_allow_html=True)
+    st.markdown("<div class='subtitle'>Dataset metrics and model performance analytics</div>", unsafe_allow_html=True)
+    
     try:
         dataset_summary = load_dataset_summary()
         df_train = load_train_results()
     except Exception as e:
-        st.error(f"❌ Error loading data: {str(e)}")
+        st.error(f"Error loading data: {str(e)}")
         return
     
     # ================================
     # SECTION 1: Dataset Overview
     # ================================
-    st.header("📊 Dataset Overview")
+    st.markdown("<h3>Dataset Distribution</h3>", unsafe_allow_html=True)
     
-    # Key metrics in cards
     col1, col2, col3, col4 = st.columns(4)
-    
     with col1:
-        st.metric("📊 Total Records", f"{dataset_summary['total']:,}")
-    
+        st.metric("Total Records", f"{dataset_summary['total']:,}")
     with col2:
-        num_subjects = len(dataset_summary['subjects'])
-        st.metric("📚 Subjects", num_subjects)
-    
+        st.metric("Subjects", len(dataset_summary['subjects']))
     with col3:
-        num_statuses = len(dataset_summary['statuses'])
-        st.metric("🏷️ Status Types", num_statuses)
-    
+        st.metric("Status Types", len(dataset_summary['statuses']))
     with col4:
         if not df_train.empty:
             accuracy = float(df_train['accuracy'][0]) * 100
-            st.metric("🎯 Model Accuracy", f"{accuracy:.1f}%")
+            st.metric("Model Accuracy", f"{accuracy:.1f}%")
         else:
-            st.metric("⚠️ Model Accuracy", "N/A")
+            st.metric("Model Accuracy", "N/A")
+            
+    st.write("") # Spacer
     
-    # Dataset distribution charts
     col1, col2 = st.columns(2)
-    
     with col1:
-        st.subheader("Distribution by Status")
         df_status = dataset_summary['statuses']
-        
         fig_status = px.pie(
-            df_status,
-            names="status",
-            values="count",
-            hole=0.4,
-            color_discrete_sequence=px.colors.sequential.RdBu
+            df_status, names="status", values="count", hole=0.6,
+            color_discrete_sequence=["#3B82F6", "#93C5FD", "#1E40AF", "#DBEAFE"]
         )
-        fig_status.update_layout(height=320)
+        fig_status.update_traces(textinfo='percent+label', textposition='outside', hoverinfo='label+percent+name')
+        fig_status = apply_minimalist_layout(fig_status)
+        fig_status.update_layout(title_text="By Status", title_x=0.5, title_font=dict(size=14))
         st.plotly_chart(fig_status, use_container_width=True)
-    
-    with col2:
-        st.subheader("Distribution by Subject")
-        df_subject = dataset_summary['subjects']
         
+    with col2:
+        df_subject = dataset_summary['subjects']
         fig_subject = px.bar(
-            df_subject,
-            x="subject",
-            y="count",
-            text="count",
-            color="subject",
-            color_discrete_sequence=px.colors.qualitative.Set2
+            df_subject, x="subject", y="count",
+            color_discrete_sequence=["#64748B"]
         )
-        fig_subject.update_traces(textposition="outside")
-        fig_subject.update_layout(height=320)
+        fig_subject.update_traces(marker_line_width=0, opacity=0.8)
+        fig_subject = apply_minimalist_layout(fig_subject)
+        fig_subject.update_layout(title_text="By Subject", title_x=0.5, title_font=dict(size=14))
         st.plotly_chart(fig_subject, use_container_width=True)
-    
-    # Detailed table
-    with st.expander("📋 View Detailed Statistics"):
-        col1, col2 = st.columns(2)
-        with col1:
-            st.write("**By Status:**")
-            st.dataframe(df_status, use_container_width=True, hide_index=True)
-        with col2:
-            st.write("**By Subject:**")
-            st.dataframe(df_subject, use_container_width=True, hide_index=True)
-    
+
+    with st.expander("View Raw Data"):
+        c1, c2 = st.columns(2)
+        c1.dataframe(df_status, use_container_width=True, hide_index=True)
+        c2.dataframe(df_subject, use_container_width=True, hide_index=True)
+
+    st.markdown("<br><br>", unsafe_allow_html=True) # Spacer
+
     # ================================
     # SECTION 2: Model Performance
     # ================================
-    st.header("🎯 Model Performance")
+    st.markdown("<h3>Model Performance</h3>", unsafe_allow_html=True)
     
     if df_train.empty:
-        st.warning("⚠️ No Training Results Available\n\nTrain your model to see performance metrics here.")
+        st.info("No training results available yet.")
         return
-    
-    # Latest training info
-    st.info(f"**Last Trained:** {df_train['timestamp'][0]}\n\n**Training ID:** #{df_train['id'][0]}")
-    
-    # Performance metrics cards
-    col1, col2, col3, col4 = st.columns(4)
+        
+    st.caption(f"Latest Build: {df_train['timestamp'][0]} • ID: {df_train['id'][0]}")
     
     accuracy = float(df_train['accuracy'][0])
     precision = float(df_train['prec'][0])
     recall = float(df_train['recall'][0])
     f1 = float(df_train['f1'][0])
     
-    with col1:
-        st.metric("Accuracy", f"{accuracy:.4f}", f"{accuracy*100:.2f}%")
+    col1, col2, col3, col4 = st.columns(4)
+    col1.metric("Accuracy", f"{accuracy:.3f}")
+    col2.metric("Precision", f"{precision:.3f}")
+    col3.metric("Recall", f"{recall:.3f}")
+    col4.metric("F1 Score", f"{f1:.3f}")
     
-    with col2:
-        st.metric("Precision", f"{precision:.4f}", f"{precision*100:.2f}%")
+    st.write("") # Spacer
     
-    with col3:
-        st.metric("Recall", f"{recall:.4f}", f"{recall*100:.2f}%")
-    
-    with col4:
-        st.metric("F1 Score", f"{f1:.4f}", f"{f1*100:.2f}%")
-    
-    # Visualizations
-    col1, col2 = st.columns([1, 1])
+    col1, col2 = st.columns([1.2, 1])
     
     with col1:
-        st.subheader("Performance Metrics")
-        metrics_table = pd.DataFrame({
-            "Metric": ["Accuracy", "Precision", "Recall", "F1 Score"],
-            "Value": [accuracy, precision, recall, f1]
-        })
-        
-        fig_bar = px.bar(
-            metrics_table,
-            x="Metric",
-            y="Value",
-            text=[f"{v:.4f}" for v in metrics_table["Value"]],
-            color="Metric",
-            color_discrete_sequence=px.colors.qualitative.Bold
-        )
-        fig_bar.update_traces(textposition="outside")
-        fig_bar.update_layout(height=360, yaxis=dict(range=[0, 1.1]))
-        st.plotly_chart(fig_bar, use_container_width=True)
-    
+        df_history = load_training_history()
+        if len(df_history) > 1:
+            df_history = df_history.sort_values('timestamp')
+            fig_trend = px.line(
+                df_history, x="timestamp", y=["accuracy", "prec", "recall", "f1"],
+                color_discrete_sequence=["#0F172A", "#3B82F6", "#10B981", "#6366F1"]
+            )
+            fig_trend.update_traces(line=dict(width=2))
+            fig_trend = apply_minimalist_layout(fig_trend)
+            fig_trend.update_layout(
+                title_text="Performance History", title_x=0.05, title_font=dict(size=14),
+                showlegend=True, legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+            )
+            st.plotly_chart(fig_trend, use_container_width=True)
+        else:
+            st.write("Insufficient data for trend analysis.")
+            
     with col2:
-        st.subheader("Confusion Matrix")
         try:
             cm = np.array(eval(df_train["confusion_matrix"][0]))
             labels = ["Class 0", "Class 1"]
@@ -228,51 +237,23 @@ def stats_page():
                     pass
             
             fig_cm = go.Figure(data=go.Heatmap(
-                z=cm,
-                x=[f"Pred {l}" for l in labels],
-                y=[f"Actual {l}" for l in labels],
-                text=cm.astype(int),
-                texttemplate="%{text}",
-                colorscale="Blues"
+                z=cm, x=labels, y=labels,
+                text=cm.astype(int), texttemplate="%{text}",
+                colorscale="Blues", showscale=False,
+                hoverinfo="skip"
             ))
-            fig_cm.update_layout(height=360)
+            fig_cm = apply_minimalist_layout(fig_cm)
+            fig_cm.update_layout(
+                title_text="Confusion Matrix", title_x=0.5, title_font=dict(size=14),
+                xaxis_title="Predicted", yaxis_title="Actual",
+                yaxis=dict(autorange="reversed") # Standard CM orientation
+            )
             st.plotly_chart(fig_cm, use_container_width=True)
-        except Exception as e:
-            st.error(f"Error displaying confusion matrix: {str(e)}")
-    
-    # Training history trend
-    st.subheader("Training History Trend")
-    df_history = load_training_history()
-    if len(df_history) > 1:
-        df_history = df_history.sort_values('timestamp')
-        fig_trend = px.line(
-            df_history,
-            x="timestamp",
-            y=["accuracy", "prec", "recall", "f1"],
-            markers=True,
-            color_discrete_sequence=px.colors.qualitative.Bold
-        )
-        fig_trend.update_layout(height=320, hovermode="x unified")
-        st.plotly_chart(fig_trend, use_container_width=True)
-    else:
-        st.info("📊 Train the model multiple times to see performance trends over time.")
-    
-    # Performance summary
-    with st.expander("📊 Detailed Metrics Table"):
-        detailed_metrics = pd.DataFrame({
-            "Metric": ["Accuracy", "Precision", "Recall", "F1 Score"],
-            "Score": [accuracy, precision, recall, f1],
-            "Percentage": [f"{v*100:.2f}%" for v in [accuracy, precision, recall, f1]]
-        })
-        st.dataframe(detailed_metrics, use_container_width=True, hide_index=True)
-    
-    # Footer
-    st.markdown(
-        "<p style='text-align:center; color:gray;'>🔒 Secure Admin Dashboard </p>",
-        unsafe_allow_html=True
-    )
-    st.divider()
+        except Exception:
+            st.write("Confusion matrix data unavailable.")
 
-# Run the stats page
+    # Footer
+    st.markdown("<br><hr style='border-top: 1px solid #E2E8F0;'><p style='text-align:center; color:#94A3B8; font-size: 0.8rem;'>Secure Admin Environment</p>", unsafe_allow_html=True)
+
 if __name__ == "__main__":
     stats_page()
