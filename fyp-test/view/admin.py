@@ -161,6 +161,7 @@ def stats_page():
             )
 
     # Dataset distribution charts
+    
     col1, col2 = st.columns(2)
 
     with col1:
@@ -174,16 +175,18 @@ def stats_page():
     )
     fig_status.update_layout(height=320)
 
-    st.markdown(
-        """
-        <div style="background-color:#f9f9f9; padding:15px; border-radius:10px; 
-                    box-shadow:2px 2px 5px rgba(0,0,0,0.1);">
-            <h4 style="text-align:center; color:#2E86C1;">Distribution by Status</h4>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-    st.plotly_chart(fig_status, use_container_width=True)
+    # Card wrapper
+    with st.container():
+        st.markdown(
+            """
+            <div style="background-color:#f9f9f9; padding:15px; border-radius:10px;
+                        box-shadow:2px 2px 5px rgba(0,0,0,0.1);">
+                <h4 style="text-align:center; color:#2E86C1;">Distribution by Status</h4>
+            """,
+            unsafe_allow_html=True
+        )
+        st.plotly_chart(fig_status, use_container_width=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
     with col2:
         df_subject = dataset_summary['subjects']
@@ -198,16 +201,19 @@ def stats_page():
     fig_subject.update_traces(textposition="outside")
     fig_subject.update_layout(height=320)
 
-    st.markdown(
-        """
-        <div style="background-color:#f9f9f9; padding:15px; border-radius:10px; 
-                    box-shadow:2px 2px 5px rgba(0,0,0,0.1);">
-            <h4 style="text-align:center; color:#16A085;">Distribution by Subject</h4>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-    st.plotly_chart(fig_subject, use_container_width=True)
+    # Card wrapper
+    with st.container():
+        st.markdown(
+            """
+            <div style="background-color:#f9f9f9; padding:15px; border-radius:10px;
+                        box-shadow:2px 2px 5px rgba(0,0,0,0.1);">
+                <h4 style="text-align:center; color:#16A085;">Distribution by Subject</h4>
+            """,
+            unsafe_allow_html=True
+        )
+        st.plotly_chart(fig_subject, use_container_width=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+
 
     
     # Detailed table
