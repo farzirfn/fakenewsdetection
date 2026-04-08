@@ -4,11 +4,12 @@ import mysql.connector
 # Database connection
 def create_connection():
     return mysql.connector.connect(
-    host="localhost",
-    user="farzifae_fyp",
-    password="AK9CYVY#),&2",
-    database="farzifae_fyp"
-)
+        host=st.secrets["mysql"]["host"],
+        port=st.secrets["mysql"]["port"],
+        user=st.secrets["mysql"]["username"],
+        password=st.secrets["mysql"]["password"],
+        database=st.secrets["mysql"]["database"]
+    )
 
 def login_page():
     # Back to Home button (styled)
