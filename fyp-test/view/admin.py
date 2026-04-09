@@ -385,8 +385,7 @@ def stats_page():
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown("---")
-    st.caption("⚡ Admin Dashboard ")
+    st.markdown("<p style='text-align:center; color:gray;'>⚡ Admin Dashboard</p>", unsafe_allow_html=True)
 
 
 if __name__ == "__main__":
