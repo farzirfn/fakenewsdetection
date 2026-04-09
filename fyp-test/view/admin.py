@@ -378,9 +378,6 @@ def stats_page():
         st.plotly_chart(fig_trend, use_container_width=True)
     else:
         st.info("📊 Train the model multiple times to see performance trends over time.")
-
-    # Footer
-    st.markdown("<hr class='thin-divider'>", unsafe_allow_html=True)
     st.markdown(f"""
     <div style='display:flex;align-items:center;justify-content:space-between;'>
         <span style='font-size:11px;color:#aaa;'>Training #{tid} · {ts}</span>
