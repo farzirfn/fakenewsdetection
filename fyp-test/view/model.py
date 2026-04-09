@@ -89,6 +89,7 @@ def retrain_model(progress_placeholder, status_placeholder, plot_placeholder,
         # ===========================
         # K-FOLD SETUP
         # ===========================
+        BATCH_SIZE = 16
         skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=42)
         tokenizer = DistilBertTokenizer.from_pretrained("distilbert-base-uncased")
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -102,7 +103,7 @@ def retrain_model(progress_placeholder, status_placeholder, plot_placeholder,
         # K-FOLD LOOP
         # ===========================
         for fold, (train_idx, val_idx) in enumerate(skf.split(texts, labels_encoded)):
-            status_placeholder.text(f"🔄 Fold {fold+1}/{N_SPLITS} — Training...")
+            status_placeholder.text(f"🔄 Fold {fold+1}/{n_splits} — Training...")
 
             X_train, X_val = texts[train_idx], texts[val_idx]
             y_train, y_val = labels_encoded[train_idx], labels_encoded[val_idx]
@@ -124,7 +125,7 @@ def retrain_model(progress_placeholder, status_placeholder, plot_placeholder,
                 "linear",
                 optimizer,
                 num_warmup_steps=0,
-                num_training_steps=len(train_loader) * MAX_EPOCHS
+                num_training_steps=len(train_loader) * max_epochs
             )
 
             best_loss = float("inf")
@@ -132,7 +133,7 @@ def retrain_model(progress_placeholder, status_placeholder, plot_placeholder,
             epoch_losses = []
 
             # ------- Training Loop -------
-            for epoch in range(MAX_EPOCHS):
+            for epoch in range(max_epochs):
                 model.train()
                 batch_losses = []
 
@@ -147,8 +148,8 @@ def retrain_model(progress_placeholder, status_placeholder, plot_placeholder,
                     batch_losses.append(loss.item())
 
                     # Progress bar
-                    fold_progress = int((fold / N_SPLITS) * 80)
-                    epoch_progress = int((batch_idx / len(train_loader)) * (80 / N_SPLITS))
+                    fold_progress = int((fold / n_splits) * 80)
+                    epoch_progress = int((batch_idx / len(train_loader)) * (80 / n_splits))
                     progress_placeholder.progress(min(10 + fold_progress + epoch_progress, 89))
 
                 avg_loss = np.mean(batch_losses)
@@ -176,7 +177,7 @@ def retrain_model(progress_placeholder, status_placeholder, plot_placeholder,
                     no_improve = 0
                 else:
                     no_improve += 1
-                if no_improve >= PATIENCE:
+                if no_improve >= patience:
                     status_placeholder.text(f"⏹️ Early stopping — Fold {fold+1} Epoch {epoch+1}")
                     break
 
