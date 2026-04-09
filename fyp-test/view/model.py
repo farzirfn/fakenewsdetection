@@ -56,7 +56,8 @@ def create_connection():
 # -------------------------------
 # Retrain Model dengan K-Fold CV
 # -------------------------------
-def retrain_model(progress_placeholder, status_placeholder, plot_placeholder):
+def retrain_model(progress_placeholder, status_placeholder, plot_placeholder,
+                  n_splits=5, max_epochs=10, patience=3):
     start_time = time.time()
     try:
         # ===========================
@@ -88,12 +89,7 @@ def retrain_model(progress_placeholder, status_placeholder, plot_placeholder):
         # ===========================
         # K-FOLD SETUP
         # ===========================
-        N_SPLITS = 5
-        MAX_EPOCHS = 10
-        PATIENCE = 3
-        BATCH_SIZE = 16
-
-        skf = StratifiedKFold(n_splits=N_SPLITS, shuffle=True, random_state=42)
+        skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=42)
         tokenizer = DistilBertTokenizer.from_pretrained("distilbert-base-uncased")
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         num_labels = len(label_encoder.classes_)
