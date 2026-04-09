@@ -21,6 +21,10 @@ def login_page():
     <style>
     #MainMenu, footer, header { visibility: hidden; }
     .block-container { padding-top: 3rem; padding-bottom: 2rem; }
+                
+    .stApp {
+    background-color: #e3f2fd;
+    }
 
     .login-title {
         font-size: 22px;
