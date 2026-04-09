@@ -6,99 +6,6 @@ import plotly.graph_objects as go
 import plotly.express as px
 
 # -------------------------------
-# Custom CSS — Minimalist Theme
-# -------------------------------
-def inject_css():
-    st.markdown("""
-    <style>
-    /* Hide default streamlit elements */
-    #MainMenu, footer, header { visibility: hidden; }
-    .block-container { padding-top: 2rem; padding-bottom: 2rem; }
-
-    /* Section labels */
-    .section-label {
-        font-size: 15px;
-        font-weight: 600;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
-        color: #888780;
-        margin-bottom: 0.5rem;
-        margin-top: 1.5rem;
-    }
-
-    /* Metric cards */
-    .metric-row {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 10px;
-        margin-bottom: 1.25rem;
-    }
-    .metric-card {
-        background: #f7f6f2;
-        border-radius: 10px;
-        padding: 14px 16px;
-        border-left: 3px solid #ccc;
-    }
-    .metric-card.blue  { border-left-color: #378ADD; }
-    .metric-card.green { border-left-color: #639922; }
-    .metric-card.amber { border-left-color: #BA7517; }
-    .metric-card.teal  { border-left-color: #1D9E75; }
-    .metric-card .m-label {
-        font-size: 10px;
-        color: #888;
-        margin-bottom: 4px;
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
-    }
-    .metric-card .m-value {
-        font-size: 22px;
-        font-weight: 500;
-        color: #2c2c2a;
-        line-height: 1.2;
-    }
-    .metric-card .m-sub {
-        font-size: 10px;
-        color: #aaa;
-        margin-top: 2px;
-    }
-
-    /* Status pill */
-    .pill-ok {
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-        font-size: 11px;
-        padding: 3px 10px;
-        border-radius: 99px;
-        background: #eaf3de;
-        color: #3b6d11;
-    }
-    .pill-warn {
-        background: #faeeda;
-        color: #854f0b;
-    }
-
-    /* Divider */
-    .thin-divider {
-        border: none;
-        border-top: 0.5px solid #e0ded8;
-        margin: 1rem 0;
-    }
-
-    /* Dark mode overrides */
-    @media (prefers-color-scheme: dark) {
-        .metric-card { background: #1e1e1c; }
-        .metric-card .m-value { color: #e0ded8; }
-        .metric-card .m-label { color: #666; }
-        .metric-card .m-sub   { color: #555; }
-        .pill-ok  { background: #17340a; color: #9fd065; }
-        .pill-warn{ background: #412402; color: #f9cb42; }
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-
-# -------------------------------
 # DB Connection
 # -------------------------------
 def create_connection():
@@ -110,32 +17,48 @@ def create_connection():
         database=st.secrets["mysql"]["database"]
     )
 
+# -------------------------------
+# Load dataset statistics
+# -------------------------------
+def load_stats():
+    """Load dataset distribution by status"""
+    conn = create_connection()
+    query = "SELECT status, COUNT(*) as count FROM dataset GROUP BY status"
+    df = pd.read_sql(query, conn)
+    conn.close()
+    return df
 
-# -------------------------------
-# Data Loaders
-# -------------------------------
 def load_dataset_summary():
+    """Load comprehensive dataset statistics"""
     conn = create_connection()
     cursor = conn.cursor(dictionary=True)
-
+    
+    # Total records
     cursor.execute("SELECT COUNT(*) as total FROM dataset")
     total = cursor.fetchone()['total']
-
-    cursor.execute("SELECT subject, COUNT(*) as count FROM dataset GROUP BY subject ORDER BY count DESC")
+    
+    # Records by subject
+    cursor.execute("SELECT subject, COUNT(*) as count FROM dataset GROUP BY subject")
     subjects = cursor.fetchall()
-
+    
+    # Records by status
     cursor.execute("SELECT status, COUNT(*) as count FROM dataset GROUP BY status")
     statuses = cursor.fetchall()
-
+    
     cursor.close()
     conn.close()
+    
     return {
         'total': total,
         'subjects': pd.DataFrame(subjects),
         'statuses': pd.DataFrame(statuses)
     }
 
+# -------------------------------
+# Load training results
+# -------------------------------
 def load_train_results():
+    """Load latest training result"""
     conn = create_connection()
     query = "SELECT * FROM train_results ORDER BY timestamp DESC LIMIT 1"
     df = pd.read_sql(query, conn)
@@ -143,267 +66,286 @@ def load_train_results():
     return df
 
 def load_training_history():
+    """Load all training history for trends"""
     conn = create_connection()
-    query = "SELECT * FROM train_results ORDER BY timestamp ASC"
+    query = "SELECT * FROM train_results ORDER BY timestamp DESC LIMIT 10"
     df = pd.read_sql(query, conn)
     conn.close()
     return df
 
-
 # -------------------------------
-# Plotly theme helper
-# -------------------------------
-PLOT_LAYOUT = dict(
-    paper_bgcolor="rgba(0,0,0,0)",
-    plot_bgcolor="rgba(0,0,0,0)",
-    font=dict(family="sans-serif", size=12, color="#888780"),
-    margin=dict(l=0, r=0, t=10, b=0),
-    showlegend=False,
-)
-
-COLORS = {
-    "blue":  "#378ADD",
-    "green": "#639922",
-    "amber": "#BA7517",
-    "teal":  "#1D9E75",
-    "red":   "#E24B4A",
-    "gray":  "#B4B2A9",
-}
-
-
-# -------------------------------
-# Admin Dashboard
+# Admin Dashboard Page
 # -------------------------------
 def stats_page():
-    inject_css()
-
     # Header
-    st.markdown("## Admin dashboard")
     st.markdown(
-        "<p style='color:#888;font-size:13px;margin-top:-8px;'>Fake news detection · real-time insights</p>",
+        "<h2 style='text-align:center; color:#2E86C1;'>📊 Admin Dashboard</h2>",
         unsafe_allow_html=True
     )
-    st.markdown("<hr class='thin-divider'>", unsafe_allow_html=True)
-
+    st.write("<p style='text-align:center; color:gray;'>Real-time insights and model performance metrics</p>", unsafe_allow_html=True)
+    st.divider()
+    
     # Load data
     try:
-        summary = load_dataset_summary()
+        dataset_summary = load_dataset_summary()
         df_train = load_train_results()
     except Exception as e:
-        st.error(f"❌ Database error: {str(e)}")
+        st.error(f"❌ Error loading data: {str(e)}")
         return
-
-    # ─── Section: Overview ───────────────────────────────────
-    st.markdown("<div class='section-label'>Overview</div>", unsafe_allow_html=True)
-
-    accuracy_val = float(df_train['accuracy'].iloc[0]) * 100 if not df_train.empty else None
-
-    st.markdown(f"""
-    <div class='metric-row'>
-        <div class='metric-card blue'>
-            <div class='m-label'>Total records</div>
-            <div class='m-value'>{summary['total']:,}</div>
-            <div class='m-sub'>Dataset entries</div>
-        </div>
-        <div class='metric-card green'>
-            <div class='m-label'>Subjects</div>
-            <div class='m-value'>{len(summary['subjects'])}</div>
-            <div class='m-sub'>Unique categories</div>
-        </div>
-        <div class='metric-card amber'>
-            <div class='m-label'>Status types</div>
-            <div class='m-value'>{len(summary['statuses'])}</div>
-            <div class='m-sub'>Real · Fake</div>
-        </div>
-        <div class='metric-card teal'>
-            <div class='m-label'>Model accuracy</div>
-            <div class='m-value'>{"N/A" if accuracy_val is None else f"{accuracy_val:.1f}%"}</div>
-            <div class='m-sub'>Latest training run</div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # ─── Charts: Subject + Status ─────────────────────────────
-    col1, col2 = st.columns([3, 2], gap="medium")
-
+    
+    # ================================
+    # SECTION 1: Dataset Overview
+    # ================================
+    st.header("📊 Dataset Overview")
+    
+    # Key metrics in cards
+    col1, col2, col3, col4 = st.columns(4)
+    
     with col1:
-        st.markdown("<div class='section-label'>Distribution by subject</div>", unsafe_allow_html=True)
-        df_subj = summary['subjects']
-        fig = go.Figure(go.Bar(
-            x=df_subj['count'],
-            y=df_subj['subject'],
-            orientation='h',
-            marker=dict(
-                color=df_subj['count'],
-                colorscale=[[0, "#B5D4F4"], [1, "#185FA5"]],
-                showscale=False
-            ),
-            text=df_subj['count'].apply(lambda x: f"{x:,}"),
-            textposition='outside',
-            textfont=dict(size=11, color="#888780"),
-        ))
-        fig.update_layout(
-            **PLOT_LAYOUT,
-            height=260,
-            xaxis=dict(showgrid=False, showticklabels=False, zeroline=False),
-            yaxis=dict(showgrid=False, tickfont=dict(size=12)),
-        )
-        st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
-
-    with col2:
-        st.markdown("<div class='section-label'>Distribution by status</div>", unsafe_allow_html=True)
-        df_stat = summary['statuses']
-        fig2 = go.Figure(go.Pie(
-            labels=df_stat['status'],
-            values=df_stat['count'],
-            hole=0.62,
-            marker=dict(colors=[COLORS["blue"], COLORS["red"]]),
-            textinfo='none',
-        ))
-        fig2.add_annotation(
-            text=f"{df_stat['count'].iloc[0]:,}",
-            x=0.5, y=0.55,
-            font=dict(size=18, color="#2c2c2a"),
-            showarrow=False
-        )
-        fig2.add_annotation(
-            text=df_stat['status'].iloc[0],
-            x=0.5, y=0.4,
-            font=dict(size=11, color="#888780"),
-            showarrow=False
-        )
-        fig2.update_layout(**PLOT_LAYOUT, height=260)
-        st.plotly_chart(fig2, use_container_width=True, config={"displayModeBar": False})
-
-    # ─── Section: Model Performance ──────────────────────────
-    st.markdown("<hr class='thin-divider'>", unsafe_allow_html=True)
-    st.markdown("<div class='section-label'>Model performance</div>", unsafe_allow_html=True)
-
-    if df_train.empty:
-        st.info("No training results yet. Train the model to see metrics here.")
-        return
-
-    acc  = float(df_train['accuracy'].iloc[0])
-    prec = float(df_train['prec'].iloc[0])
-    rec  = float(df_train['recall'].iloc[0])
-    f1   = float(df_train['f1'].iloc[0])
-    ts   = df_train['timestamp'].iloc[0]
-    tid  = df_train['id'].iloc[0]
-
-    # Perf metric cards
-    col1, col2, col3, col4 = st.columns(4, gap="small")
-    for col, name, val, color in zip(
-        [col1, col2, col3, col4],
-        ["Accuracy", "Precision", "Recall", "F1 score"],
-        [acc, prec, rec, f1],
-        ["blue", "green", "amber", "teal"]
-    ):
-        with col:
-            st.markdown(f"""
-            <div class='metric-card {color}'>
-                <div class='m-label'>{name}</div>
-                <div class='m-value'>{val:.4f}</div>
-                <div class='m-sub'>{val*100:.2f}%</div>
+        st.markdown(
+            f"""
+            <div style="background-color:#eaf2f8; padding:20px; border-radius:10px; text-align:center; box-shadow:2px 2px 5px rgba(0,0,0,0.1);">
+                <h4 style="color:#2E86C1;">📊 Total Records</h4>
+                <h2 style="color:#000;">{dataset_summary['total']:,}</h2>
             </div>
-            """, unsafe_allow_html=True)
-
-    st.markdown("<br>", unsafe_allow_html=True)
-
-    # Horizontal bar chart for metrics
-    col1, col2 = st.columns([2, 3], gap="medium")
-
-    with col1:
-        metrics_df = pd.DataFrame({
-            "Metric": ["Accuracy", "Precision", "Recall", "F1 score"],
-            "Score": [acc, prec, rec, f1],
-            "Color": [COLORS["blue"], COLORS["green"], COLORS["amber"], COLORS["teal"]]
-        })
-        fig3 = go.Figure()
-        for _, row in metrics_df.iterrows():
-            fig3.add_trace(go.Bar(
-                x=[row['Score']],
-                y=[row['Metric']],
-                orientation='h',
-                marker=dict(color=row['Color']),
-                text=[f"{row['Score']*100:.1f}%"],
-                textposition='outside',
-                textfont=dict(size=11, color="#888780"),
-                name=row['Metric']
-            ))
-        fig3.update_layout(
-            **PLOT_LAYOUT,
-            height=220,
-            barmode='stack',
-            xaxis=dict(range=[0, 1.1], showgrid=False, showticklabels=False, zeroline=False),
-            yaxis=dict(showgrid=False, tickfont=dict(size=12)),
+            """,
+            unsafe_allow_html=True
         )
-        st.plotly_chart(fig3, use_container_width=True, config={"displayModeBar": False})
 
+    
     with col2:
-        # Confusion matrix
+        num_subjects = len(dataset_summary['subjects'])
+        st.markdown(
+            f"""
+            <div style="background-color:#eaf2f8; padding:20px; border-radius:10px; text-align:center; box-shadow:2px 2px 5px rgba(0,0,0,0.1);">
+                <h4 style="color:#2E86C1;">📚 Subjects</h4>
+                <h2 style="color:#000;">{num_subjects}</h2>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+    
+    with col3:
+        num_statuses = len(dataset_summary['statuses'])
+        st.markdown(
+            f"""
+            <div style="background-color:#eaf2f8; padding:20px; border-radius:10px; text-align:center; box-shadow:2px 2px 5px rgba(0,0,0,0.1);">
+                <h4 style="color:#2E86C1;">🏷️ Status Types</h4>
+                <h2 style="color:#000;">{num_statuses}</h2>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+    
+    with col4:
+        if not df_train.empty:
+            accuracy = float(df_train['accuracy'][0]) * 100
+            st.markdown(
+                f"""
+                <div style="background-color:#eaf2f8; padding:20px; border-radius:10px; text-align:center; box-shadow:2px 2px 5px rgba(0,0,0,0.1);">
+                    <h4 style="color:#2E86C1;">🎯 Model Accuracy</h4>
+                    <h2 style="color:#000;">{accuracy:.1f}%</h2>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+        else:
+            st.markdown(
+                f"""
+                <div style="background-color:#eaf2f8; padding:20px; border-radius:10px; text-align:center; box-shadow:2px 2px 5px rgba(0,0,0,0.1);">
+                    <h4 style="color:#2E86C1;">🎯 Model Accuracy</h4>
+                    <h2 style="color:#000;">N/A</h2>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+    # Dataset distribution charts
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.subheader("Distribution by Status")
+        df_status = dataset_summary['statuses']
+        
+        fig_status = px.pie(
+            df_status,
+            names="status",
+            values="count",
+            hole=0.4,
+            color_discrete_sequence=px.colors.sequential.RdBu
+        )
+        fig_status.update_layout(height=320)
+        st.plotly_chart(fig_status, use_container_width=True)
+    
+    with col2:
+        st.subheader("Distribution by Subject")
+        df_subject = dataset_summary['subjects']
+        
+        fig_subject = px.bar(
+            df_subject,
+            x="subject",
+            y="count",
+            text="count",
+            color="subject",
+            color_discrete_sequence=px.colors.qualitative.Set2
+        )
+        fig_subject.update_traces(textposition="outside")
+        fig_subject.update_layout(height=320)
+        st.plotly_chart(fig_subject, use_container_width=True)
+    
+    # Detailed table
+    with st.expander("📋 View Detailed Statistics"):
+        col1, col2 = st.columns(2)
+        with col1:
+            st.write("**By Status:**")
+            st.dataframe(df_status, use_container_width=True, hide_index=True)
+        with col2:
+            st.write("**By Subject:**")
+            st.dataframe(df_subject, use_container_width=True, hide_index=True)
+    
+    # ================================
+    # SECTION 2: Model Performance
+    # ================================
+    st.header("🎯 Model Performance")
+    
+    if df_train.empty:
+        st.warning("⚠️ No Training Results Available\n\nTrain your model to see performance metrics here.")
+        return
+    
+    # Latest training info
+    st.info(f"**Last Trained:** {df_train['timestamp'][0]}\n\n**Training ID:** #{df_train['id'][0]}")
+    
+    # Performance metrics cards
+    col1, col2, col3, col4 = st.columns(4)
+    
+    accuracy = float(df_train['accuracy'][0])
+    precision = float(df_train['prec'][0])
+    recall = float(df_train['recall'][0])
+    f1 = float(df_train['f1'][0])
+    
+    with col1:
+        st.markdown(
+            f"""
+            <div style="background-color:#eaf2f8; padding:20px; border-radius:10px; text-align:center; box-shadow:2px 2px 5px rgba(0,0,0,0.1);">
+                <h4 style="color:#2E86C1;">🎯 Model Accuracy</h4>
+                <h2 style="color:#000;">{accuracy*100:.2f}%</h2>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+    
+    with col2:
+        st.markdown(
+            f"""
+            <div style="background-color:#eaf2f8; padding:20px; border-radius:10px; text-align:center; box-shadow:2px 2px 5px rgba(0,0,0,0.1);">
+                <h4 style="color:#2E86C1;">📊 Precision</h4>
+                <h2 style="color:#000;">{precision*100:.2f}%</h2>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+    
+    with col3:
+        st.markdown(
+            f"""
+            <div style="background-color:#eaf2f8; padding:20px; border-radius:10px; text-align:center; box-shadow:2px 2px 5px rgba(0,0,0,0.1);">
+                <h4 style="color:#2E86C1;">📈 Recall</h4>
+                <h2 style="color:#000;">{recall*100:.2f}%</h2>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+    
+    with col4:
+        st.markdown(
+            f"""
+            <div style="background-color:#eaf2f8; padding:20px; border-radius:10px; text-align:center; box-shadow:2px 2px 5px rgba(0,0,0,0.1);">
+                <h4 style="color:#2E86C1;">📊 F1 Score</h4>
+                <h2 style="color:#000;">{f1*100:.2f}%</h2>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+    
+    # Visualizations
+    col1, col2 = st.columns([1, 1])
+    
+    with col1:
+        st.subheader("Performance Metrics")
+        metrics_table = pd.DataFrame({
+            "Metric": ["Accuracy", "Precision", "Recall", "F1 Score"],
+            "Value": [accuracy, precision, recall, f1]
+        })
+        
+        fig_bar = px.bar(
+            metrics_table,
+            x="Metric",
+            y="Value",
+            text=[f"{v:.4f}" for v in metrics_table["Value"]],
+            color="Metric",
+            color_discrete_sequence=px.colors.qualitative.Bold
+        )
+        fig_bar.update_traces(textposition="outside")
+        fig_bar.update_layout(height=360, yaxis=dict(range=[0, 1.1]))
+        st.plotly_chart(fig_bar, use_container_width=True)
+    
+    with col2:
+        st.subheader("Confusion Matrix")
         try:
-            cm = np.array(eval(df_train["confusion_matrix"].iloc[0]))
-            labels = ["Real", "Fake"]
-            if "classes" in df_train.columns and pd.notna(df_train["classes"].iloc[0]):
+            cm = np.array(eval(df_train["confusion_matrix"][0]))
+            labels = ["Class 0", "Class 1"]
+            if "classes" in df_train.columns and pd.notna(df_train["classes"][0]):
                 try:
-                    labels = list(eval(df_train["classes"].iloc[0]))
+                    labels = list(eval(df_train["classes"][0]))
                 except Exception:
                     pass
-
-            fig4 = go.Figure(go.Heatmap(
+            
+            fig_cm = go.Figure(data=go.Heatmap(
                 z=cm,
                 x=[f"Pred {l}" for l in labels],
                 y=[f"Actual {l}" for l in labels],
                 text=cm.astype(int),
                 texttemplate="%{text}",
-                colorscale=[[0, "#E6F1FB"], [1, "#185FA5"]],
-                showscale=False,
+                colorscale="Blues"
             ))
-            fig4.update_layout(**PLOT_LAYOUT, height=220)
-            st.plotly_chart(fig4, use_container_width=True, config={"displayModeBar": False})
+            fig_cm.update_layout(height=360)
+            st.plotly_chart(fig_cm, use_container_width=True)
         except Exception as e:
-            st.warning(f"Confusion matrix unavailable: {e}")
-
+            st.error(f"Error displaying confusion matrix: {str(e)}")
+    
     # Training history trend
-    df_hist = load_training_history()
-    if len(df_hist) > 1:
-        st.markdown("<div class='section-label'>Training history</div>", unsafe_allow_html=True)
-        fig5 = go.Figure()
-        for metric, color in zip(
-            ["accuracy", "prec", "recall", "f1"],
-            [COLORS["blue"], COLORS["green"], COLORS["amber"], COLORS["teal"]]
-        ):
-            fig5.add_trace(go.Scatter(
-                x=df_hist["timestamp"],
-                y=df_hist[metric],
-                mode="lines+markers",
-                name=metric.capitalize(),
-                line=dict(color=color, width=1.5),
-                marker=dict(size=5),
-            ))
-        fig5.update_layout(
-            **{k: v for k, v in PLOT_LAYOUT.items() if k != 'showlegend'},
-            height=220,
-            showlegend=True,
-            legend=dict(
-                orientation="h", y=-0.25,
-                font=dict(size=11, color="#888780")
-            ),
-            xaxis=dict(showgrid=False, tickfont=dict(size=11)),
-            yaxis=dict(showgrid=True, gridcolor="#f0eeea", tickfont=dict(size=11), range=[0, 1.05]),
-            hovermode="x unified",
+    st.subheader("Training History Trend")
+    df_history = load_training_history()
+    if len(df_history) > 1:
+        df_history = df_history.sort_values('timestamp')
+        fig_trend = px.line(
+            df_history,
+            x="timestamp",
+            y=["accuracy", "prec", "recall", "f1"],
+            markers=True,
+            color_discrete_sequence=px.colors.qualitative.Bold
         )
-        st.plotly_chart(fig5, use_container_width=True, config={"displayModeBar": False})
-
+        fig_trend.update_layout(height=320, hovermode="x unified")
+        st.plotly_chart(fig_trend, use_container_width=True)
+    else:
+        st.info("📊 Train the model multiple times to see performance trends over time.")
+    
+    # Performance summary
+    with st.expander("📊 Detailed Metrics Table"):
+        detailed_metrics = pd.DataFrame({
+            "Metric": ["Accuracy", "Precision", "Recall", "F1 Score"],
+            "Score": [accuracy, precision, recall, f1],
+            "Percentage": [f"{v*100:.2f}%" for v in [accuracy, precision, recall, f1]]
+        })
+        st.dataframe(detailed_metrics, use_container_width=True, hide_index=True)
+    
     # Footer
-    st.markdown("<hr class='thin-divider'>", unsafe_allow_html=True)
-    st.markdown(f"""
-    <div style='display:flex;align-items:center;justify-content:space-between;'>
-        <span style='font-size:11px;color:#aaa;'>Training #{tid} · {ts}</span>
-        <span class='pill-ok'>● Model ready</span>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown(
+        "<p style='text-align:center; color:gray;'>🔒 Secure Admin Dashboard </p>",
+        unsafe_allow_html=True
+    )
+    st.divider()
 
-
+# Run the stats page
 if __name__ == "__main__":
     stats_page()
