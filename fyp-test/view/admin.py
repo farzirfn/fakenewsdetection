@@ -180,7 +180,7 @@ def stats_page():
     # Header
     st.title("📊 Admin Dashboard")
     st.write("Real-time insights and model performance metrics")
-    
+
     st.divider()
 
     # Load data
@@ -338,7 +338,6 @@ def stats_page():
         st.plotly_chart(fig3, use_container_width=True, config={"displayModeBar": False})
 
     with col2:
-        # Confusion matrix
         try:
             cm = np.array(eval(df_train["confusion_matrix"].iloc[0]))
             labels = ["Real", "Fake"]
@@ -362,36 +361,22 @@ def stats_page():
         except Exception as e:
             st.warning(f"Confusion matrix unavailable: {e}")
 
-    # Training history trend
-    df_hist = load_training_history()
-    if len(df_hist) > 1:
-        st.markdown("<div class='section-label'>Training history</div>", unsafe_allow_html=True)
-        fig5 = go.Figure()
-        for metric, color in zip(
-            ["accuracy", "prec", "recall", "f1"],
-            [COLORS["blue"], COLORS["green"], COLORS["amber"], COLORS["teal"]]
-        ):
-            fig5.add_trace(go.Scatter(
-                x=df_hist["timestamp"],
-                y=df_hist[metric],
-                mode="lines+markers",
-                name=metric.capitalize(),
-                line=dict(color=color, width=1.5),
-                marker=dict(size=5),
-            ))
-        fig5.update_layout(
-            **{k: v for k, v in PLOT_LAYOUT.items() if k != 'showlegend'},
-            height=220,
-            showlegend=True,
-            legend=dict(
-                orientation="h", y=-0.25,
-                font=dict(size=11, color="#888780")
-            ),
-            xaxis=dict(showgrid=False, tickfont=dict(size=11)),
-            yaxis=dict(showgrid=True, gridcolor="#f0eeea", tickfont=dict(size=11), range=[0, 1.05]),
-            hovermode="x unified",
+    # ─── Training History (original) ─────────────────────────
+    st.subheader("Training History Trend")
+    df_history = load_training_history()
+    if len(df_history) > 1:
+        df_history = df_history.sort_values('timestamp')
+        fig_trend = px.line(
+            df_history,
+            x="timestamp",
+            y=["accuracy", "prec", "recall", "f1"],
+            markers=True,
+            color_discrete_sequence=px.colors.qualitative.Bold
         )
-        st.plotly_chart(fig5, use_container_width=True, config={"displayModeBar": False})
+        fig_trend.update_layout(height=320, hovermode="x unified")
+        st.plotly_chart(fig_trend, use_container_width=True)
+    else:
+        st.info("📊 Train the model multiple times to see performance trends over time.")
 
     # Footer
     st.markdown("<hr class='thin-divider'>", unsafe_allow_html=True)
