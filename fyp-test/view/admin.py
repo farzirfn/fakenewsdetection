@@ -178,11 +178,9 @@ def stats_page():
     inject_css()
 
     # Header
-    st.markdown(
-        "<h2 style='text-align:center; color:#2E86C1;'>📊 Admin Dashboard</h2>",
-        unsafe_allow_html=True
-    )
-    st.write("<p style='text-align:center; color:gray;'>Real-time insights and model performance metrics</p>", unsafe_allow_html=True)
+    st.title("📊 Admin Dashboard")
+    st.write("Real-time insights and model performance metrics")
+    
     st.divider()
 
     # Load data
