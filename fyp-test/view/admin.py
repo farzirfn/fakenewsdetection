@@ -44,7 +44,7 @@ def inject_css():
     .metric-card.amber { border-left-color: #BA7517; }
     .metric-card.teal  { border-left-color: #1D9E75; }
     .metric-card .m-label {
-        font-size: 10px;
+        font-size: 20px;
         color: #888;
         margin-bottom: 4px;
         text-transform: uppercase;
