@@ -22,14 +22,6 @@ def login_page():
     #MainMenu, footer, header { visibility: hidden; }
     .block-container { padding-top: 3rem; padding-bottom: 2rem; }
 
-    .login-wrap {
-        max-width: 400px;
-        margin: 0 auto;
-        padding: 2.5rem 2rem;
-        background: #f7f6f2;
-        border-radius: 16px;
-        border: 0.5px solid #e0ded8;
-    }
     .login-title {
         font-size: 22px;
         font-weight: 500;
