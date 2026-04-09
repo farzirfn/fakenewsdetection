@@ -12,7 +12,7 @@ def inject_css():
     st.markdown("""
     <style>
     /* Hide default streamlit elements */
-    #MainMenu, footer, header { visibility: hidden; }
+    #MainMenu, footer, header { visibility: show; }
     .block-container { padding-top: 2rem; padding-bottom: 2rem; }
 
     /* Section labels */
