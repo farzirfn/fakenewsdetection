@@ -382,7 +382,7 @@ def stats_page():
                 marker=dict(size=5),
             ))
         fig5.update_layout(
-            **PLOT_LAYOUT,
+            **{k: v for k, v in PLOT_LAYOUT.items() if k != 'showlegend'},
             height=220,
             showlegend=True,
             legend=dict(
