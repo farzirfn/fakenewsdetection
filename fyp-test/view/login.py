@@ -27,14 +27,15 @@ def login_page():
     }
 
     .login-title {
-        font-size: 22px;
+        font-size: 40px;
         font-weight: 500;
         color: #2c2c2a;
         text-align: center;
         margin-bottom: 4px;
+        font-family: monospace;
     }
     .login-sub {
-        font-size: 13px;
+        font-size: 20px;
         color: #888780;
         text-align: center;
         margin-bottom: 1.75rem;
@@ -45,7 +46,7 @@ def login_page():
         margin: 1.25rem 0;
     }
     .help-text {
-        font-size: 12px;
+        font-size: 15px;
         color: #aaa;
         text-align: center;
         margin-top: 1rem;
