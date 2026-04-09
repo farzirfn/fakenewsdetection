@@ -17,7 +17,7 @@ def inject_css():
 
     /* Section labels */
     .section-label {
-        font-size: 15px;
+        font-size: 25px;
         font-weight: 600;
         letter-spacing: 0.12em;
         text-transform: uppercase;
@@ -44,20 +44,20 @@ def inject_css():
     .metric-card.amber { border-left-color: #BA7517; }
     .metric-card.teal  { border-left-color: #1D9E75; }
     .metric-card .m-label {
-        font-size: 20px;
+        font-size: 15px;
         color: #888;
         margin-bottom: 4px;
         text-transform: uppercase;
         letter-spacing: 0.06em;
     }
     .metric-card .m-value {
-        font-size: 22px;
+        font-size: 30px;
         font-weight: 500;
         color: #2c2c2a;
         line-height: 1.2;
     }
     .metric-card .m-sub {
-        font-size: 10px;
+        font-size: 15px;
         color: #aaa;
         margin-top: 2px;
     }
@@ -180,10 +180,11 @@ def stats_page():
     # Header
     st.markdown("## Admin dashboard")
     st.markdown(
-        "<p style='color:#888;font-size:13px;margin-top:-8px;'>Fake news detection · real-time insights</p>",
+        "<h2 style='text-align:center; color:#2E86C1;'>📊 Admin Dashboard</h2>",
         unsafe_allow_html=True
     )
-    st.markdown("<hr class='thin-divider'>", unsafe_allow_html=True)
+    st.write("<p style='text-align:center; color:gray;'>Real-time insights and model performance metrics</p>", unsafe_allow_html=True)
+    st.divider()
 
     # Load data
     try:
