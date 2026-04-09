@@ -17,7 +17,7 @@ def inject_css():
 
     /* Section labels */
     .section-label {
-        font-size: 10px;
+        font-size: 15px;
         font-weight: 600;
         letter-spacing: 0.12em;
         text-transform: uppercase;
