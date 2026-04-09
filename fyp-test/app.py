@@ -16,6 +16,17 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+st.markdown("""
+<style>
+[data-testid="stSidebar"] {
+    border-radius: 0 20px 20px 0;
+    overflow: hidden;
+}
+[data-testid="stSidebar"] > div:first-child {
+    border-radius: 0 20px 20px 0;
+}
+</style>
+""", unsafe_allow_html=True)
 
 # ================================
 # SESSION STATE INITIALIZATION
