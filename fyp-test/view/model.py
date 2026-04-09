@@ -71,12 +71,12 @@ class NewsDataset(Dataset):
 # ─────────────────────────────────────────────
 def create_connection():
     return mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="",
-        database="fyp"
+        host=st.secrets["mysql"]["host"],
+        port=st.secrets["mysql"]["port"],
+        user=st.secrets["mysql"]["username"],
+        password=st.secrets["mysql"]["password"],
+        database=st.secrets["mysql"]["database"]
     )
-
 def save_results_to_db(acc, prec, rec, f1, cm, classes, epochs_used):
     conn   = create_connection()
     cursor = conn.cursor()
