@@ -308,12 +308,58 @@ def retrain_model(progress_placeholder, status_placeholder, plot_placeholder):
 def model_page():
     st.title("🤖 Model Retraining — K-Fold Cross Validation")
 
+    # ===========================
+    # TETAPAN PENGGUNA
+    # ===========================
+    st.subheader("⚙️ Tetapan Training")
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        n_splits = st.slider(
+            "Bilangan Fold (K)",
+            min_value=3,
+            max_value=10,
+            value=5,
+            step=1,
+            help="Lebih besar = lebih teliti tapi lebih lama"
+        )
+
+    with col2:
+        max_epochs = st.slider(
+            "Max Epochs per Fold",
+            min_value=3,
+            max_value=15,
+            value=10,
+            step=1
+        )
+
+    with col3:
+        patience = st.slider(
+            "Early Stopping Patience",
+            min_value=1,
+            max_value=5,
+            value=3,
+            step=1
+        )
+
+    # Tunjuk anggaran masa
+    st.info(
+        f"Anggaran: **{n_splits} fold** × max **{max_epochs} epoch** "
+        f"= max **{n_splits * max_epochs} epoch** total"
+    )
+
     if st.button("🚀 Start Retraining"):
-        progress  = st.progress(0)
-        status    = st.empty()
+        progress   = st.progress(0)
+        status     = st.empty()
         loss_chart = st.empty()
 
-        result = retrain_model(progress, status, loss_chart)
+        result = retrain_model(
+            progress, status, loss_chart,
+            n_splits=n_splits,         # ← hantar parameter
+            max_epochs=max_epochs,
+            patience=patience
+        )
 
         progress.empty()
         status.empty()
