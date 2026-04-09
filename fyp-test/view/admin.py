@@ -362,7 +362,8 @@ def stats_page():
             st.warning(f"Confusion matrix unavailable: {e}")
 
     # ─── Training History (original) ─────────────────────────
-    st.subheader("Training History Trend")
+    st.markdown("<hr class='thin-divider'>", unsafe_allow_html=True)
+    st.markdown("<div class='section-label'>Training History Trends</div>", unsafe_allow_html=True)
     df_history = load_training_history()
     if len(df_history) > 1:
         df_history = df_history.sort_values('timestamp')
