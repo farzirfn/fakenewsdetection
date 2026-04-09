@@ -386,7 +386,7 @@ def stats_page():
     """, unsafe_allow_html=True)
 
     st.markdown("---")
-    st.caption("⚡ Admin Dahsboard provides real-time insights into dataset composition and model performance. Monitor training runs, analyze metrics, and ensure your fake news detection model stays accurate and reliable.")
+    st.caption("⚡ Admin Dashboard ")
 
 
 if __name__ == "__main__":
