@@ -19,11 +19,11 @@ st.set_page_config(
 st.markdown("""
 <style>
 [data-testid="stSidebar"] {
-    border-radius: 0 20px 20px 0;
+    border-radius: 0 30px 30px 0;
     overflow: hidden;
 }
 [data-testid="stSidebar"] > div:first-child {
-    border-radius: 0 20px 20px 0;
+    border-radius: 0 30px 30px 0;
 }
 </style>
 """, unsafe_allow_html=True)
