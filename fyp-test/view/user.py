@@ -6,6 +6,7 @@ import pickle
 import plotly.graph_objects as go
 import plotly.express as px
 from transformers import DistilBertForSequenceClassification, DistilBertTokenizer
+from view.xai import display_xai_report
 
 # ================================
 # MODEL LOADING
@@ -144,6 +145,10 @@ def user_home():
                 fig_probs.update_traces(textposition="outside")
                 fig_probs.update_layout(height=320)
                 st.plotly_chart(fig_probs, use_container_width=True)
+            
+            # Explainable AI Analysis
+            st.divider()
+            display_xai_report(model, tokenizer, label_encoder, device, text_input, label, confidence)
             
         else:
             st.warning("⚠️ Please enter some text to analyze.")
